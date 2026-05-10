@@ -5,6 +5,8 @@ export const GRID_COLS = Math.floor(CANVAS_WIDTH / GRID_CELL_SIZE);
 export const GRID_ROWS = Math.floor(CANVAS_HEIGHT / GRID_CELL_SIZE);
 
 export const GAME_BG_COLOR = "#0f172a";
+export const GAME_GRID_COLOR = "#1e293b";
+export const GAME_GRID_ALPHA = 0.35;
 export const HUD_TEXT_COLOR = "#e2e8f0";
 export const HUD_FONT = "18px system-ui";
 export const HUD_TITLE_FONT = "24px system-ui";
@@ -23,8 +25,18 @@ export const UI_OPTION_GAP = 140;
 export const UI_TITLE_Y_RATIO = 0.35;
 export const UI_SUBTITLE_Y_RATIO = 0.5;
 export const UI_OPTION_Y_RATIO = 0.74;
+export const UI_DIALOG_RADIUS = 18;
+export const UI_DIALOG_SHADOW = "rgba(15, 23, 42, 0.45)";
+export const UI_BUTTON_BG = "#0b223b";
+export const UI_BUTTON_BORDER = "#38bdf8";
+export const UI_BUTTON_TEXT = "#e2e8f0";
+export const UI_BUTTON_PADDING_X = 18;
+export const UI_BUTTON_PADDING_Y = 10;
+export const UI_BUTTON_RADIUS = 12;
 
 export const SNAKE_COLOR = "#22c55e";
+export const SNAKE_HEAD_COLOR = "#4ade80";
+export const SNAKE_STROKE_COLOR = "#14532d";
 export const SNAKE_SPEED = 8;
 export const SNAKE_INITIAL_LENGTH = 3;
 

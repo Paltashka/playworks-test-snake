@@ -13,6 +13,14 @@ import {
   UI_TITLE_Y_RATIO,
   UI_SUBTITLE_Y_RATIO,
   UI_OPTION_Y_RATIO,
+  UI_DIALOG_RADIUS,
+  UI_DIALOG_SHADOW,
+  UI_BUTTON_BG,
+  UI_BUTTON_BORDER,
+  UI_BUTTON_TEXT,
+  UI_BUTTON_PADDING_X,
+  UI_BUTTON_PADDING_Y,
+  UI_BUTTON_RADIUS,
 } from "../utils/constants.js";
 
 /**
@@ -92,11 +100,18 @@ export class UIManager {
   drawDialog({ x, y, width, height, message, options = [], subtitle }) {
     this.ctx.save();
 
+    this.ctx.shadowColor = UI_DIALOG_SHADOW;
+    this.ctx.shadowBlur = 18;
+    this.ctx.shadowOffsetY = 8;
+
     this.ctx.fillStyle = UI_DIALOG_BG;
     this.ctx.strokeStyle = UI_DIALOG_STROKE;
     this.ctx.lineWidth = 2;
-    this.ctx.fillRect(x, y, width, height);
-    this.ctx.strokeRect(x, y, width, height);
+    this.drawRoundedRect(x, y, width, height, UI_DIALOG_RADIUS);
+    this.ctx.fill();
+
+    this.ctx.shadowColor = "transparent";
+    this.ctx.stroke();
 
     this.ctx.fillStyle = UI_TEXT_COLOR;
     this.ctx.textAlign = "center";
@@ -119,12 +134,60 @@ export class UIManager {
     const gap = UI_OPTION_GAP;
 
     if (options.length === 1) {
-      this.ctx.fillText(options[0], x + width / 2, optionY);
+      this.drawButton(x + width / 2, optionY, options[0]);
     } else if (options.length >= 2) {
-      this.ctx.fillText(options[0], x + width / 2 - gap, optionY);
-      this.ctx.fillText(options[1], x + width / 2 + gap, optionY);
+      this.drawButton(x + width / 2 - gap, optionY, options[0]);
+      this.drawButton(x + width / 2 + gap, optionY, options[1]);
     }
 
     this.ctx.restore();
+  }
+
+  /**
+   * @param {number} centerX
+   * @param {number} centerY
+   * @param {string} label
+   */
+  drawButton(centerX, centerY, label) {
+    const metrics = this.ctx.measureText(label);
+    const textWidth = metrics.width;
+    const width = textWidth + UI_BUTTON_PADDING_X * 2;
+    const height = UI_BUTTON_PADDING_Y * 2 + 18;
+    const x = centerX - width / 2;
+    const y = centerY - height / 2;
+
+    this.ctx.save();
+    this.ctx.fillStyle = UI_BUTTON_BG;
+    this.ctx.strokeStyle = UI_BUTTON_BORDER;
+    this.ctx.lineWidth = 1.5;
+    this.drawRoundedRect(x, y, width, height, UI_BUTTON_RADIUS);
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    this.ctx.fillStyle = UI_BUTTON_TEXT;
+    this.ctx.fillText(label, centerX, centerY + 1);
+    this.ctx.restore();
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} width
+   * @param {number} height
+   * @param {number} radius
+   */
+  drawRoundedRect(x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + r, y);
+    this.ctx.lineTo(x + width - r, y);
+    this.ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    this.ctx.lineTo(x + width, y + height - r);
+    this.ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    this.ctx.lineTo(x + r, y + height);
+    this.ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    this.ctx.lineTo(x, y + r);
+    this.ctx.quadraticCurveTo(x, y, x + r, y);
+    this.ctx.closePath();
   }
 }

@@ -1,6 +1,8 @@
 import {
   SNAKE_COLOR,
   SNAKE_INITIAL_LENGTH,
+  SNAKE_HEAD_COLOR,
+  SNAKE_STROKE_COLOR,
   SNAKE_SPEED,
 } from "../utils/constants.js";
 
@@ -165,14 +167,20 @@ export class Snake {
       return;
     }
 
+    const inset = Math.max(1, Math.floor(this.cellSize * 0.08));
     ctx.fillStyle = SNAKE_COLOR;
-    for (const segment of this.body) {
-      ctx.fillRect(
-        segment.x * this.cellSize,
-        segment.y * this.cellSize,
-        this.cellSize,
-        this.cellSize,
-      );
+    ctx.strokeStyle = SNAKE_STROKE_COLOR;
+    ctx.lineWidth = 2;
+
+    for (let i = 0; i < this.body.length; i += 1) {
+      const segment = this.body[i];
+      const x = segment.x * this.cellSize + inset;
+      const y = segment.y * this.cellSize + inset;
+      const size = this.cellSize - inset * 2;
+
+      ctx.fillStyle = i === 0 ? SNAKE_HEAD_COLOR : SNAKE_COLOR;
+      ctx.fillRect(x, y, size, size);
+      ctx.strokeRect(x, y, size, size);
     }
   }
 }

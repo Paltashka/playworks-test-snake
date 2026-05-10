@@ -8,6 +8,8 @@ import {
   GRID_COLS,
   GRID_ROWS,
   GAME_BG_COLOR,
+  GAME_GRID_COLOR,
+  GAME_GRID_ALPHA,
   HUD_TEXT_COLOR,
   HUD_FONT,
   HUD_TITLE_FONT,
@@ -296,6 +298,7 @@ export class Game {
 
     this.ctx.fillStyle = GAME_BG_COLOR;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.renderGrid();
 
     if (this.uiManager) {
       this.uiManager.render(this.state, { score: this.score });
@@ -333,6 +336,37 @@ export class Game {
         this.canvas.height / 2,
       );
     }
+  }
+
+  /**
+   * Draws the background grid.
+   */
+  renderGrid() {
+    const { ctx, canvas, cellSize } = this;
+    if (!ctx || !canvas) {
+      return;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = GAME_GRID_ALPHA;
+    ctx.strokeStyle = GAME_GRID_COLOR;
+    ctx.lineWidth = 1;
+
+    for (let x = 0; x <= canvas.width; x += cellSize) {
+      ctx.beginPath();
+      ctx.moveTo(x + 0.5, 0);
+      ctx.lineTo(x + 0.5, canvas.height);
+      ctx.stroke();
+    }
+
+    for (let y = 0; y <= canvas.height; y += cellSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y + 0.5);
+      ctx.lineTo(canvas.width, y + 0.5);
+      ctx.stroke();
+    }
+
+    ctx.restore();
   }
 }
 
