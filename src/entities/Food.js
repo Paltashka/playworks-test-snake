@@ -1,4 +1,15 @@
+import { FOOD_COLOR } from "../utils/constants.js";
+
+/**
+ * Represents food on the grid.
+ */
 export class Food {
+  /**
+   * @param {object} options
+   * @param {number} options.cols
+   * @param {number} options.rows
+   * @param {number} options.cellSize
+   */
   constructor({ cols, rows, cellSize } = {}) {
     this.cols = cols;
     this.rows = rows;
@@ -6,6 +17,9 @@ export class Food {
     this.position = null;
   }
 
+  /**
+   * @param {Set<string>} [occupied]
+   */
   spawn(occupied = new Set()) {
     const max = this.cols * this.rows;
     if (occupied.size >= max) {
@@ -26,12 +40,15 @@ export class Food {
     }
   }
 
+  /**
+   * @param {CanvasRenderingContext2D} ctx
+   */
   render(ctx) {
     if (!ctx || !this.position) {
       return;
     }
 
-    ctx.fillStyle = "#f97316";
+    ctx.fillStyle = FOOD_COLOR;
     ctx.fillRect(
       this.position.x * this.cellSize,
       this.position.y * this.cellSize,

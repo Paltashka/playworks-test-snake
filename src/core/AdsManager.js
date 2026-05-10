@@ -1,12 +1,19 @@
-const SDK_URL = "https://imasdk.googleapis.com/js/sdkloader/ima3.js";
-const DEFAULT_AD_TAG =
-  "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=";
+import { IMA_SDK_URL, IMA_TEST_AD_TAG } from "../utils/constants.js";
 
+/**
+ * Handles Google IMA SDK initialization and ad playback.
+ */
 export class AdsManager {
+  /**
+   * @param {object} [options]
+   * @param {string} [options.containerId]
+   * @param {string} [options.videoId]
+   * @param {string} [options.adTagUrl]
+   */
   constructor({
     containerId = "ad-container",
     videoId = "ad-video",
-    adTagUrl = DEFAULT_AD_TAG,
+    adTagUrl = IMA_TEST_AD_TAG,
   } = {}) {
     this.container = document.getElementById(containerId);
     this.video = document.getElementById(videoId);
@@ -18,6 +25,10 @@ export class AdsManager {
     this.initialized = false;
   }
 
+  /**
+   * Loads the IMA SDK script once.
+   * @returns {Promise<void>}
+   */
   static loadSdk() {
     if (AdsManager.sdkPromise) {
       return AdsManager.sdkPromise;
@@ -30,7 +41,7 @@ export class AdsManager {
       }
 
       const script = document.createElement("script");
-      script.src = SDK_URL;
+      script.src = IMA_SDK_URL;
       script.async = true;
       script.onload = () => resolve();
       script.onerror = () => reject(new Error("IMA SDK load failed"));
@@ -40,6 +51,10 @@ export class AdsManager {
     return AdsManager.sdkPromise;
   }
 
+  /**
+   * Initializes the ad display container inside a user gesture.
+   * @returns {Promise<boolean>}
+   */
   async prime() {
     if (this.initialized) {
       return true;
@@ -68,6 +83,13 @@ export class AdsManager {
     }
   }
 
+  /**
+   * Requests and plays a single ad.
+   * @param {object} [options]
+   * @param {number} [options.width]
+   * @param {number} [options.height]
+   * @returns {Promise<void>}
+   */
   async playAd({ width, height } = {}) {
     const ready = await this.prime();
     if (!ready) {
@@ -102,6 +124,12 @@ export class AdsManager {
     });
   }
 
+  /**
+   * @param {google.ima.AdsManagerLoadedEvent} event
+   * @param {() => void} resolve
+   * @param {number} [width]
+   * @param {number} [height]
+   */
   onAdsManagerLoaded(event, resolve, width, height) {
     try {
       this.adsManager = event.getAdsManager(this.video);
@@ -116,6 +144,10 @@ export class AdsManager {
     }
   }
 
+  /**
+   * @param {google.ima.AdErrorEvent} event
+   * @param {() => void} resolve
+   */
   onAdError(event, resolve) {
     if (event && event.getError) {
       console.warn("Ad error:", event.getError().toString());
@@ -123,6 +155,9 @@ export class AdsManager {
     this.finish(resolve);
   }
 
+  /**
+   * @param {() => void} resolve
+   */
   attachAdEvents(resolve) {
     if (!this.adsManager) {
       return;
@@ -148,6 +183,10 @@ export class AdsManager {
     );
   }
 
+  /**
+   * Cleans up ad playback and hides the overlay.
+   * @param {() => void} resolve
+   */
   finish(resolve) {
     if (this.adsManager) {
       try {
@@ -166,12 +205,18 @@ export class AdsManager {
     resolve();
   }
 
+  /**
+   * Shows the ad overlay container.
+   */
   show() {
     if (this.container) {
       this.container.style.display = "flex";
     }
   }
 
+  /**
+   * Hides the ad overlay container.
+   */
   hide() {
     if (this.container) {
       this.container.style.display = "none";

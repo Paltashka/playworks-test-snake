@@ -17,7 +17,17 @@ const DEFAULT_BINDINGS = Object.freeze({
   [GAME_STATES.GAMEOVER]: new Set(["OK", "CANCEL"]),
 });
 
+/**
+ * Handles keyboard input and dispatches actions based on game state.
+ */
 export class InputHandler {
+  /**
+   * @param {object} [options]
+   * @param {import("./game.js").Game} [options.game]
+   * @param {EventTarget} [options.target]
+   * @param {Record<string, Set<string>>} [options.bindings]
+   * @param {(payload: { action: string, phase: string, state: string }) => void} [options.onAction]
+   */
   constructor({
     game,
     target = window,
@@ -35,6 +45,9 @@ export class InputHandler {
     this.handleKeyUp = this.handleKeyUp.bind(this);
   }
 
+  /**
+   * Starts listening for keyboard events.
+   */
   start() {
     if (!this.target) {
       return;
@@ -43,6 +56,9 @@ export class InputHandler {
     this.target.addEventListener("keyup", this.handleKeyUp);
   }
 
+  /**
+   * Stops listening for keyboard events.
+   */
   stop() {
     if (!this.target) {
       return;
@@ -51,10 +67,17 @@ export class InputHandler {
     this.target.removeEventListener("keyup", this.handleKeyUp);
   }
 
+  /**
+   * @param {string} action
+   * @returns {boolean}
+   */
   isPressed(action) {
     return this.pressed.has(action);
   }
 
+  /**
+   * @param {KeyboardEvent} event
+   */
   handleKeyDown(event) {
     const action = KEY_ACTIONS[event.key];
     if (!action) {
@@ -74,6 +97,9 @@ export class InputHandler {
     this.handleAction(action, "down");
   }
 
+  /**
+   * @param {KeyboardEvent} event
+   */
   handleKeyUp(event) {
     const action = KEY_ACTIONS[event.key];
     if (!action) {
@@ -90,12 +116,20 @@ export class InputHandler {
     this.handleAction(action, "up");
   }
 
+  /**
+   * @param {string} action
+   * @returns {boolean}
+   */
   isActionAllowed(action) {
     const state = this.game ? this.game.state : GAME_STATES.BOOT;
     const allowed = this.bindings[state];
     return Boolean(allowed && allowed.has(action));
   }
 
+  /**
+   * @param {string} action
+   * @param {string} phase
+   */
   handleAction(action, phase) {
     const state = this.game ? this.game.state : GAME_STATES.BOOT;
 

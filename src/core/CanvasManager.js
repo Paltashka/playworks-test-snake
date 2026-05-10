@@ -1,4 +1,14 @@
+/**
+ * Manages the game canvas and its 2D rendering context.
+ */
 export class CanvasManager {
+  /**
+   * @param {object} [options]
+   * @param {HTMLCanvasElement} [options.canvas]
+   * @param {string} [options.canvasId]
+   * @param {number} [options.width]
+   * @param {number} [options.height]
+   */
   constructor({ canvas, canvasId = "game-canvas", width, height } = {}) {
     this.canvas = canvas || document.getElementById(canvasId);
     this.ctx = this.canvas ? this.canvas.getContext("2d") : null;
@@ -11,6 +21,9 @@ export class CanvasManager {
     }
   }
 
+  /**
+   * Clears the full canvas.
+   */
   clear() {
     if (!this.ctx || !this.canvas) {
       return;

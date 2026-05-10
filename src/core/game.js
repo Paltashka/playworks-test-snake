@@ -3,7 +3,17 @@ import { UIManager } from "./UIManager.js";
 import { AdsManager } from "./AdsManager.js";
 import { Snake, SNAKE_DIRECTIONS } from "../entities/snake.js";
 import { Food } from "../entities/Food.js";
-import { GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from "../utils/constants.js";
+import {
+  GRID_CELL_SIZE,
+  GRID_COLS,
+  GRID_ROWS,
+  GAME_BG_COLOR,
+  HUD_TEXT_COLOR,
+  HUD_FONT,
+  HUD_TITLE_FONT,
+  HUD_PADDING,
+  SNAKE_INITIAL_LENGTH,
+} from "../utils/constants.js";
 
 export const GAME_STATES = Object.freeze({
   BOOT: "BOOT",
@@ -13,7 +23,17 @@ export const GAME_STATES = Object.freeze({
   GAMEOVER: "GAMEOVER",
 });
 
+/**
+ * Orchestrates game state, entities, and rendering.
+ */
 export class Game {
+  /**
+   * @param {object} [options]
+   * @param {CanvasManager} [options.canvasManager]
+   * @param {UIManager} [options.uiManager]
+   * @param {AdsManager} [options.adsManager]
+   * @param {HTMLCanvasElement} [options.canvas]
+   */
   constructor({ canvasManager, uiManager, adsManager, canvas } = {}) {
     this.canvasManager =
       canvasManager || new CanvasManager({ canvas, canvasId: "game-canvas" });
@@ -56,6 +76,9 @@ export class Game {
     this.loop = this.loop.bind(this);
   }
 
+  /**
+   * Starts the requestAnimationFrame loop.
+   */
   start() {
     if (this.rafId !== null) {
       return;
@@ -63,6 +86,9 @@ export class Game {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
+  /**
+   * Stops the requestAnimationFrame loop.
+   */
   stop() {
     if (this.rafId === null) {
       return;
@@ -72,20 +98,33 @@ export class Game {
     this.prevTimestamp = 0;
   }
 
+  /**
+   * @param {object} [options]
+   * @param {boolean} [options.playAd]
+   */
   requestStart({ playAd = false } = {}) {
     this.pendingStart = true;
     this.pendingAd = playAd;
     this.adTargetState = GAME_STATES.GAME;
   }
 
+  /**
+   * Queues a game over transition.
+   */
   requestGameOver() {
     this.pendingGameOver = true;
   }
 
+  /**
+   * Queues a game restart.
+   */
   requestRestart() {
     this.pendingRestart = true;
   }
 
+  /**
+   * @param {string} nextState
+   */
   setState(nextState) {
     if (nextState === this.state) {
       return;
@@ -99,6 +138,10 @@ export class Game {
     }
   }
 
+  /**
+   * @param {string} action
+   * @param {string} phase
+   */
   handleInput(action, phase) {
     if (phase !== "down" || this.state !== GAME_STATES.GAME) {
       return;
@@ -117,6 +160,9 @@ export class Game {
     }
   }
 
+  /**
+   * Resets snake, food, and score.
+   */
   resetEntities() {
     if (this.snake) {
       this.snake.reset();
@@ -124,9 +170,15 @@ export class Game {
     if (this.food && this.snake) {
       this.food.spawn(this.snake.getOccupiedSet());
     }
-    this.score = this.snake ? Math.max(0, this.snake.body.length - 3) : 0;
+    this.score = this.snake
+      ? Math.max(0, this.snake.body.length - SNAKE_INITIAL_LENGTH)
+      : 0;
   }
 
+  /**
+   * Primes the ad container inside a user gesture.
+   * @returns {Promise<void>}
+   */
   async prepareAdPlayback() {
     if (!this.adsManager) {
       return;
@@ -139,6 +191,9 @@ export class Game {
     }
   }
 
+  /**
+   * @param {number} timestamp
+   */
   loop(timestamp) {
     if (!this.prevTimestamp) {
       this.prevTimestamp = timestamp;
@@ -153,6 +208,9 @@ export class Game {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
+  /**
+   * @param {number} deltaMs
+   */
   update(deltaMs) {
     switch (this.state) {
       case GAME_STATES.BOOT:
@@ -222,6 +280,9 @@ export class Game {
     }
   }
 
+  /**
+   * Draws the current frame.
+   */
   render() {
     if (!this.ctx || !this.canvas) {
       return;
@@ -233,7 +294,7 @@ export class Game {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    this.ctx.fillStyle = "#0f172a";
+    this.ctx.fillStyle = GAME_BG_COLOR;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     if (this.uiManager) {
@@ -251,16 +312,19 @@ export class Game {
         this.snake.render(this.ctx);
       }
 
-      this.ctx.fillStyle = "#e2e8f0";
-      this.ctx.font = "18px system-ui";
+      this.ctx.fillStyle = HUD_TEXT_COLOR;
+      this.ctx.font = HUD_FONT;
       this.ctx.textAlign = "left";
       this.ctx.textBaseline = "top";
-      this.ctx.fillText(`Очки: ${this.score}`, 16, 16);
+      this.ctx.fillText(`Очки: ${this.score}`, HUD_PADDING, HUD_PADDING);
     }
 
-    if (this.state !== GAME_STATES.MENU && this.state !== GAME_STATES.GAMEOVER) {
-      this.ctx.fillStyle = "#e2e8f0";
-      this.ctx.font = "24px system-ui";
+    if (
+      this.state !== GAME_STATES.MENU &&
+      this.state !== GAME_STATES.GAMEOVER
+    ) {
+      this.ctx.fillStyle = HUD_TEXT_COLOR;
+      this.ctx.font = HUD_TITLE_FONT;
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
       this.ctx.fillText(
@@ -272,6 +336,11 @@ export class Game {
   }
 }
 
+/**
+ * Creates and starts a new game instance.
+ * @param {object} [options]
+ * @returns {Game}
+ */
 export function initGame(options = {}) {
   const game = new Game(options);
   game.start();
