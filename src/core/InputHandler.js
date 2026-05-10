@@ -108,11 +108,13 @@ export class InputHandler {
     }
 
     if (state === GAME_STATES.MENU && action === "OK") {
-      this.game.requestStart({ playAd: false });
+      this.game.prepareAdPlayback();
+      this.game.requestStart({ playAd: true });
       return;
     }
 
     if (state === GAME_STATES.GAMEOVER && action === "OK") {
+      this.game.prepareAdPlayback();
       this.game.requestRestart();
     }
 

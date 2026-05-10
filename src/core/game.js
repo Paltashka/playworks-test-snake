@@ -1,5 +1,6 @@
 import { CanvasManager } from "./CanvasManager.js";
 import { UIManager } from "./UIManager.js";
+import { AdsManager } from "./AdsManager.js";
 import { Snake, SNAKE_DIRECTIONS } from "../entities/snake.js";
 import { Food } from "../entities/Food.js";
 import { GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from "../utils/constants.js";
@@ -13,19 +14,19 @@ export const GAME_STATES = Object.freeze({
 });
 
 export class Game {
-  constructor({ canvasManager, uiManager, canvas, adDurationMs = 3000 } = {}) {
+  constructor({ canvasManager, uiManager, adsManager, canvas } = {}) {
     this.canvasManager =
       canvasManager || new CanvasManager({ canvas, canvasId: "game-canvas" });
     this.canvas = this.canvasManager ? this.canvasManager.canvas : null;
     this.ctx = this.canvasManager ? this.canvasManager.ctx : null;
     this.uiManager =
       uiManager || new UIManager({ ctx: this.ctx, canvas: this.canvas });
+    this.adsManager = adsManager || new AdsManager();
 
     this.state = GAME_STATES.BOOT;
     this.prevTimestamp = 0;
     this.rafId = null;
     this.timeInStateMs = 0;
-    this.adDurationMs = adDurationMs;
 
     this.pendingStart = false;
     this.pendingAd = false;
@@ -46,6 +47,9 @@ export class Game {
       cellSize: this.cellSize,
     });
     this.resetEntities();
+
+    this.adPromise = null;
+    this.adTargetState = GAME_STATES.GAME;
 
     this.loop = this.loop.bind(this);
   }
@@ -69,6 +73,7 @@ export class Game {
   requestStart({ playAd = false } = {}) {
     this.pendingStart = true;
     this.pendingAd = playAd;
+    this.adTargetState = GAME_STATES.GAME;
   }
 
   requestGameOver() {
@@ -119,6 +124,18 @@ export class Game {
     }
   }
 
+  async prepareAdPlayback() {
+    if (!this.adsManager) {
+      return;
+    }
+
+    try {
+      await this.adsManager.prime();
+    } catch (error) {
+      // Ignore prime errors so the game can continue.
+    }
+  }
+
   loop(timestamp) {
     if (!this.prevTimestamp) {
       this.prevTimestamp = timestamp;
@@ -150,8 +167,22 @@ export class Game {
         }
         break;
       case GAME_STATES.AD_PLAYING:
-        if (this.timeInStateMs >= this.adDurationMs) {
-          this.setState(GAME_STATES.GAME);
+        if (!this.adsManager) {
+          this.setState(this.adTargetState);
+          break;
+        }
+
+        if (!this.adPromise) {
+          this.adPromise = this.adsManager
+            .playAd({
+              width: this.canvas ? this.canvas.width : undefined,
+              height: this.canvas ? this.canvas.height : undefined,
+            })
+            .catch(() => {})
+            .then(() => {
+              this.adPromise = null;
+              this.setState(this.adTargetState);
+            });
         }
         break;
       case GAME_STATES.GAME:
@@ -166,7 +197,12 @@ export class Game {
         }
         if (this.pendingGameOver) {
           this.pendingGameOver = false;
-          this.setState(GAME_STATES.GAMEOVER);
+          if (this.adsManager) {
+            this.adTargetState = GAME_STATES.MENU;
+            this.setState(GAME_STATES.AD_PLAYING);
+          } else {
+            this.setState(GAME_STATES.MENU);
+          }
         }
         break;
       case GAME_STATES.GAMEOVER:
