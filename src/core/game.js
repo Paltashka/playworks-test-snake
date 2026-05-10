@@ -1,3 +1,5 @@
+import { CanvasManager } from "./CanvasManager.js";
+
 export const GAME_STATES = Object.freeze({
   BOOT: "BOOT",
   MENU: "MENU",
@@ -7,9 +9,11 @@ export const GAME_STATES = Object.freeze({
 });
 
 export class Game {
-  constructor({ canvas, adDurationMs = 3000 } = {}) {
-    this.canvas = canvas || document.getElementById("game-canvas");
-    this.ctx = this.canvas ? this.canvas.getContext("2d") : null;
+  constructor({ canvasManager, canvas, adDurationMs = 3000 } = {}) {
+    this.canvasManager =
+      canvasManager || new CanvasManager({ canvas, canvasId: "game-canvas" });
+    this.canvas = this.canvasManager ? this.canvasManager.canvas : null;
+    this.ctx = this.canvasManager ? this.canvasManager.ctx : null;
 
     this.state = GAME_STATES.BOOT;
     this.prevTimestamp = 0;
@@ -120,7 +124,11 @@ export class Game {
       return;
     }
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.canvasManager) {
+      this.canvasManager.clear();
+    } else {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
     this.ctx.fillStyle = "#0f172a";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -137,8 +145,8 @@ export class Game {
   }
 }
 
-export function initGame() {
-  const game = new Game();
+export function initGame(options = {}) {
+  const game = new Game(options);
   game.start();
   return game;
 }
