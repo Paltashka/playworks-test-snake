@@ -5,5 +5,8 @@ import { InputHandler } from "./core/InputHandler.js";
 
 const canvasManager = new CanvasManager();
 const game = initGame({ canvasManager });
-const input = new InputHandler({ game });
+const input = new InputHandler({
+  game,
+  onAction: ({ action, phase }) => game.handleInput(action, phase),
+});
 input.start();

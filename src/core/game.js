@@ -1,5 +1,8 @@
 import { CanvasManager } from "./CanvasManager.js";
 import { UIManager } from "./UIManager.js";
+import { Snake, SNAKE_DIRECTIONS } from "../entities/snake.js";
+import { Food } from "../entities/Food.js";
+import { GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from "../utils/constants.js";
 
 export const GAME_STATES = Object.freeze({
   BOOT: "BOOT",
@@ -28,6 +31,21 @@ export class Game {
     this.pendingAd = false;
     this.pendingGameOver = false;
     this.pendingRestart = false;
+
+    this.cellSize = GRID_CELL_SIZE;
+    this.cols = GRID_COLS;
+    this.rows = GRID_ROWS;
+    this.snake = new Snake({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+    });
+    this.food = new Food({
+      cols: this.cols,
+      rows: this.rows,
+      cellSize: this.cellSize,
+    });
+    this.resetEntities();
 
     this.loop = this.loop.bind(this);
   }
@@ -65,8 +83,40 @@ export class Game {
     if (nextState === this.state) {
       return;
     }
+    const prevState = this.state;
     this.state = nextState;
     this.timeInStateMs = 0;
+
+    if (nextState === GAME_STATES.GAME && prevState !== GAME_STATES.GAME) {
+      this.resetEntities();
+    }
+  }
+
+  handleInput(action, phase) {
+    if (phase !== "down" || this.state !== GAME_STATES.GAME) {
+      return;
+    }
+
+    const directionMap = {
+      UP: SNAKE_DIRECTIONS.UP,
+      DOWN: SNAKE_DIRECTIONS.DOWN,
+      LEFT: SNAKE_DIRECTIONS.LEFT,
+      RIGHT: SNAKE_DIRECTIONS.RIGHT,
+    };
+
+    const direction = directionMap[action];
+    if (direction) {
+      this.snake.setDirection(direction);
+    }
+  }
+
+  resetEntities() {
+    if (this.snake) {
+      this.snake.reset();
+    }
+    if (this.food && this.snake) {
+      this.food.spawn(this.snake.getOccupiedSet());
+    }
   }
 
   loop(timestamp) {
@@ -105,6 +155,15 @@ export class Game {
         }
         break;
       case GAME_STATES.GAME:
+        if (this.snake && this.food) {
+          const result = this.snake.update(deltaMs, this.food);
+          if (result.ate) {
+            this.food.spawn(this.snake.getOccupiedSet());
+          }
+          if (result.hit) {
+            this.requestGameOver();
+          }
+        }
         if (this.pendingGameOver) {
           this.pendingGameOver = false;
           this.setState(GAME_STATES.GAMEOVER);
@@ -138,6 +197,18 @@ export class Game {
 
     if (this.uiManager) {
       this.uiManager.render(this.state);
+    }
+
+    if (
+      this.state === GAME_STATES.GAME ||
+      this.state === GAME_STATES.GAMEOVER
+    ) {
+      if (this.food) {
+        this.food.render(this.ctx);
+      }
+      if (this.snake) {
+        this.snake.render(this.ctx);
+      }
     }
 
     if (this.state !== GAME_STATES.MENU) {
