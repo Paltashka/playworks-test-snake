@@ -114,7 +114,6 @@ export class InputHandler {
     }
 
     if (state === GAME_STATES.GAMEOVER && action === "OK") {
-      this.game.prepareAdPlayback();
       this.game.requestRestart();
     }
 

@@ -51,6 +51,8 @@ export class Game {
     this.adPromise = null;
     this.adTargetState = GAME_STATES.GAME;
 
+    this.score = 0;
+
     this.loop = this.loop.bind(this);
   }
 
@@ -122,6 +124,7 @@ export class Game {
     if (this.food && this.snake) {
       this.food.spawn(this.snake.getOccupiedSet());
     }
+    this.score = this.snake ? Math.max(0, this.snake.body.length - 3) : 0;
   }
 
   async prepareAdPlayback() {
@@ -190,6 +193,7 @@ export class Game {
           const result = this.snake.update(deltaMs, this.food);
           if (result.ate) {
             this.food.spawn(this.snake.getOccupiedSet());
+            this.score += 1;
           }
           if (result.hit) {
             this.requestGameOver();
@@ -198,17 +202,18 @@ export class Game {
         if (this.pendingGameOver) {
           this.pendingGameOver = false;
           if (this.adsManager) {
-            this.adTargetState = GAME_STATES.MENU;
+            this.adTargetState = GAME_STATES.GAMEOVER;
             this.setState(GAME_STATES.AD_PLAYING);
           } else {
-            this.setState(GAME_STATES.MENU);
+            this.setState(GAME_STATES.GAMEOVER);
           }
         }
         break;
       case GAME_STATES.GAMEOVER:
         if (this.pendingRestart) {
           this.pendingRestart = false;
-          this.setState(GAME_STATES.MENU);
+          this.resetEntities();
+          this.setState(GAME_STATES.GAME);
         }
         break;
       default:
@@ -232,7 +237,7 @@ export class Game {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     if (this.uiManager) {
-      this.uiManager.render(this.state);
+      this.uiManager.render(this.state, { score: this.score });
     }
 
     if (
@@ -245,9 +250,15 @@ export class Game {
       if (this.snake) {
         this.snake.render(this.ctx);
       }
+
+      this.ctx.fillStyle = "#e2e8f0";
+      this.ctx.font = "18px system-ui";
+      this.ctx.textAlign = "left";
+      this.ctx.textBaseline = "top";
+      this.ctx.fillText(`Очки: ${this.score}`, 16, 16);
     }
 
-    if (this.state !== GAME_STATES.MENU) {
+    if (this.state !== GAME_STATES.MENU && this.state !== GAME_STATES.GAMEOVER) {
       this.ctx.fillStyle = "#e2e8f0";
       this.ctx.font = "24px system-ui";
       this.ctx.textAlign = "center";
