@@ -70,6 +70,20 @@ Test ads are loaded via Google IMA. If the ad does not play, ensure your browser
 - **Separation of concerns**: entities, UI, input, and ad logic are isolated and readable.
 - **Canvas‑only UI**: all dialogs and HUD are rendered on the canvas for strict compliance.
 
+## Architecture Notes
+
+- **State machine**: `Game` drives BOOT → MENU → AD_PLAYING → GAME → GAMEOVER.
+- **Isolation**: ads, input, UI rendering, and entities live in separate modules to keep responsibilities small.
+- **Config + logging**: feature flags and log levels are centralized, with verbose output in dev only.
+- **Strings module**: UI text is centralized for easy localization and consistency.
+
+## Edge Cases And Resilience
+
+- **Ad failures**: timeouts and retries are handled; a fallback overlay is shown if ads cannot play.
+- **Invalid timing**: non‑finite or negative delta times are ignored to keep the loop stable.
+- **Runtime safety**: guards against missing canvas/context and ad elements.
+- **Safe teardown**: ad manager cleanup is resilient to IMA exceptions.
+
 ## Scripts
 
 - `npm run dev` – start dev server

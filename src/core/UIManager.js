@@ -1,6 +1,7 @@
 import { GAME_STATES } from "./game.js";
 import {
-  UI_DIALOG_BG,
+  UI_DIALOG_GRADIENT_TOP,
+  UI_DIALOG_GRADIENT_BOTTOM,
   UI_DIALOG_STROKE,
   UI_TEXT_COLOR,
   UI_TITLE_FONT,
@@ -15,13 +16,15 @@ import {
   UI_OPTION_Y_RATIO,
   UI_DIALOG_RADIUS,
   UI_DIALOG_SHADOW,
-  UI_BUTTON_BG,
+  UI_BUTTON_GRADIENT_TOP,
+  UI_BUTTON_GRADIENT_BOTTOM,
   UI_BUTTON_BORDER,
   UI_BUTTON_TEXT,
   UI_BUTTON_PADDING_X,
   UI_BUTTON_PADDING_Y,
   UI_BUTTON_RADIUS,
 } from "../utils/constants.js";
+import { UI_STRINGS, formatScore } from "../utils/strings.js";
 
 /**
  * Renders UI dialogs on the canvas.
@@ -60,8 +63,8 @@ export class UIManager {
    * Renders the main menu dialog.
    */
   renderMenu() {
-    const message = "Хочете грати?";
-    const options = ["Так (Enter)", "Ні (Backspace)"];
+    const message = UI_STRINGS.menuTitle;
+    const options = [UI_STRINGS.menuYes, UI_STRINGS.menuNo];
 
     const width = Math.min(UI_DIALOG_WIDTH, this.canvas.width * 0.8);
     const height = UI_MENU_HEIGHT;
@@ -75,9 +78,9 @@ export class UIManager {
    * @param {number} score
    */
   renderGameOver(score) {
-    const message = "Грати знову?";
-    const subtitle = `Очки: ${score}`;
-    const options = ["Так (Enter)", "Ні (Backspace)"];
+    const message = UI_STRINGS.gameOverTitle;
+    const subtitle = formatScore(score);
+    const options = [UI_STRINGS.menuYes, UI_STRINGS.menuNo];
 
     const width = Math.min(UI_DIALOG_WIDTH, this.canvas.width * 0.8);
     const height = UI_GAMEOVER_HEIGHT;
@@ -104,7 +107,11 @@ export class UIManager {
     this.ctx.shadowBlur = 18;
     this.ctx.shadowOffsetY = 8;
 
-    this.ctx.fillStyle = UI_DIALOG_BG;
+    const panelGradient = this.ctx.createLinearGradient(0, y, 0, y + height);
+    panelGradient.addColorStop(0, UI_DIALOG_GRADIENT_TOP);
+    panelGradient.addColorStop(1, UI_DIALOG_GRADIENT_BOTTOM);
+
+    this.ctx.fillStyle = panelGradient;
     this.ctx.strokeStyle = UI_DIALOG_STROKE;
     this.ctx.lineWidth = 2;
     this.drawRoundedRect(x, y, width, height, UI_DIALOG_RADIUS);
@@ -157,7 +164,11 @@ export class UIManager {
     const y = centerY - height / 2;
 
     this.ctx.save();
-    this.ctx.fillStyle = UI_BUTTON_BG;
+    const buttonGradient = this.ctx.createLinearGradient(0, y, 0, y + height);
+    buttonGradient.addColorStop(0, UI_BUTTON_GRADIENT_TOP);
+    buttonGradient.addColorStop(1, UI_BUTTON_GRADIENT_BOTTOM);
+
+    this.ctx.fillStyle = buttonGradient;
     this.ctx.strokeStyle = UI_BUTTON_BORDER;
     this.ctx.lineWidth = 1.5;
     this.drawRoundedRect(x, y, width, height, UI_BUTTON_RADIUS);

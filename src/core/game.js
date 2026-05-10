@@ -16,6 +16,9 @@ import {
   HUD_PADDING,
   SNAKE_INITIAL_LENGTH,
 } from "../utils/constants.js";
+import { FEATURE_FLAGS } from "../utils/config.js";
+import { defaultLogger } from "../utils/logger.js";
+import { formatScore } from "../utils/strings.js";
 
 export const GAME_STATES = Object.freeze({
   BOOT: "BOOT",
@@ -35,8 +38,21 @@ export class Game {
    * @param {UIManager} [options.uiManager]
    * @param {AdsManager} [options.adsManager]
    * @param {HTMLCanvasElement} [options.canvas]
+   * @param {object} [options.logger]
+   * @param {(payload: { from: string, to: string }) => void} [options.onStateChange]
+   * @param {(payload: { type: string, data?: object }) => void} [options.onEvent]
+   * @param {(error: Error, context?: object) => void} [options.onError]
    */
-  constructor({ canvasManager, uiManager, adsManager, canvas } = {}) {
+  constructor({
+    canvasManager,
+    uiManager,
+    adsManager,
+    canvas,
+    logger,
+    onStateChange,
+    onEvent,
+    onError,
+  } = {}) {
     this.canvasManager =
       canvasManager || new CanvasManager({ canvas, canvasId: "game-canvas" });
     this.canvas = this.canvasManager ? this.canvasManager.canvas : null;
@@ -44,6 +60,10 @@ export class Game {
     this.uiManager =
       uiManager || new UIManager({ ctx: this.ctx, canvas: this.canvas });
     this.adsManager = adsManager || new AdsManager();
+    this.logger = logger || defaultLogger;
+    this.onStateChange = onStateChange || null;
+    this.onEvent = onEvent || null;
+    this.onError = onError || null;
 
     this.state = GAME_STATES.BOOT;
     this.prevTimestamp = 0;
@@ -76,6 +96,20 @@ export class Game {
     this.score = 0;
 
     this.loop = this.loop.bind(this);
+  }
+
+  /**
+   * @param {object} options
+   * @param {object} [options.logger]
+   * @param {(payload: { from: string, to: string }) => void} [options.onStateChange]
+   * @param {(payload: { type: string, data?: object }) => void} [options.onEvent]
+   * @param {(error: Error, context?: object) => void} [options.onError]
+   */
+  configure({ logger, onStateChange, onEvent, onError } = {}) {
+    if (logger) this.logger = logger;
+    if (onStateChange) this.onStateChange = onStateChange;
+    if (onEvent) this.onEvent = onEvent;
+    if (onError) this.onError = onError;
   }
 
   /**
@@ -128,12 +162,22 @@ export class Game {
    * @param {string} nextState
    */
   setState(nextState) {
+    if (!Object.values(GAME_STATES).includes(nextState)) {
+      this.logger.error("Unknown game state", nextState);
+      this.emitError(new Error("Unknown game state"), { nextState });
+      return;
+    }
+
     if (nextState === this.state) {
       return;
     }
     const prevState = this.state;
     this.state = nextState;
     this.timeInStateMs = 0;
+
+    if (FEATURE_FLAGS.enableTelemetry && this.onStateChange) {
+      this.onStateChange({ from: prevState, to: nextState });
+    }
 
     if (nextState === GAME_STATES.GAME && prevState !== GAME_STATES.GAME) {
       this.resetEntities();
@@ -189,7 +233,8 @@ export class Game {
     try {
       await this.adsManager.prime();
     } catch (error) {
-      // Ignore prime errors so the game can continue.
+      this.logger.warn("Ad prime failed", error);
+      this.emitError(error, { phase: "prime" });
     }
   }
 
@@ -201,6 +246,11 @@ export class Game {
       this.prevTimestamp = timestamp;
     }
     const deltaMs = timestamp - this.prevTimestamp;
+    if (!Number.isFinite(deltaMs) || deltaMs < 0) {
+      this.logger.warn("Invalid delta time", deltaMs);
+      this.prevTimestamp = timestamp;
+      return;
+    }
     this.prevTimestamp = timestamp;
     this.timeInStateMs += deltaMs;
 
@@ -241,7 +291,10 @@ export class Game {
               width: this.canvas ? this.canvas.width : undefined,
               height: this.canvas ? this.canvas.height : undefined,
             })
-            .catch(() => {})
+            .catch((error) => {
+              this.logger.warn("Ad playback failed", error);
+              this.emitError(error, { phase: "playAd" });
+            })
             .then(() => {
               this.adPromise = null;
               this.setState(this.adTargetState);
@@ -250,12 +303,19 @@ export class Game {
         break;
       case GAME_STATES.GAME:
         if (this.snake && this.food) {
-          const result = this.snake.update(deltaMs, this.food);
-          if (result.ate) {
-            this.food.spawn(this.snake.getOccupiedSet());
-            this.score += 1;
-          }
-          if (result.hit) {
+          try {
+            const result = this.snake.update(deltaMs, this.food);
+            if (result.ate) {
+              this.food.spawn(this.snake.getOccupiedSet());
+              this.score += 1;
+              this.emitEvent("score", { score: this.score });
+            }
+            if (result.hit) {
+              this.requestGameOver();
+            }
+          } catch (error) {
+            this.logger.error("Snake update failed", error);
+            this.emitError(error, { phase: "update" });
             this.requestGameOver();
           }
         }
@@ -319,7 +379,7 @@ export class Game {
       this.ctx.font = HUD_FONT;
       this.ctx.textAlign = "left";
       this.ctx.textBaseline = "top";
-      this.ctx.fillText(`Очки: ${this.score}`, HUD_PADDING, HUD_PADDING);
+      this.ctx.fillText(formatScore(this.score), HUD_PADDING, HUD_PADDING);
     }
 
     if (
@@ -335,6 +395,26 @@ export class Game {
         this.canvas.width / 2,
         this.canvas.height / 2,
       );
+    }
+  }
+
+  /**
+   * @param {string} type
+   * @param {object} [data]
+   */
+  emitEvent(type, data) {
+    if (FEATURE_FLAGS.enableTelemetry && this.onEvent) {
+      this.onEvent({ type, data });
+    }
+  }
+
+  /**
+   * @param {Error} error
+   * @param {object} [context]
+   */
+  emitError(error, context) {
+    if (FEATURE_FLAGS.enableTelemetry && this.onError) {
+      this.onError(error, context);
     }
   }
 
