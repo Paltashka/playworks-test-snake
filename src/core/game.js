@@ -1,4 +1,5 @@
 import { CanvasManager } from "./CanvasManager.js";
+import { UIManager } from "./UIManager.js";
 
 export const GAME_STATES = Object.freeze({
   BOOT: "BOOT",
@@ -9,11 +10,13 @@ export const GAME_STATES = Object.freeze({
 });
 
 export class Game {
-  constructor({ canvasManager, canvas, adDurationMs = 3000 } = {}) {
+  constructor({ canvasManager, uiManager, canvas, adDurationMs = 3000 } = {}) {
     this.canvasManager =
       canvasManager || new CanvasManager({ canvas, canvasId: "game-canvas" });
     this.canvas = this.canvasManager ? this.canvasManager.canvas : null;
     this.ctx = this.canvasManager ? this.canvasManager.ctx : null;
+    this.uiManager =
+      uiManager || new UIManager({ ctx: this.ctx, canvas: this.canvas });
 
     this.state = GAME_STATES.BOOT;
     this.prevTimestamp = 0;
@@ -133,15 +136,21 @@ export class Game {
     this.ctx.fillStyle = "#0f172a";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.ctx.fillStyle = "#e2e8f0";
-    this.ctx.font = "24px system-ui";
-    this.ctx.textAlign = "center";
-    this.ctx.textBaseline = "middle";
-    this.ctx.fillText(
-      this.state,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-    );
+    if (this.uiManager) {
+      this.uiManager.render(this.state);
+    }
+
+    if (this.state !== GAME_STATES.MENU) {
+      this.ctx.fillStyle = "#e2e8f0";
+      this.ctx.font = "24px system-ui";
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillText(
+        this.state,
+        this.canvas.width / 2,
+        this.canvas.height / 2,
+      );
+    }
   }
 }
 
