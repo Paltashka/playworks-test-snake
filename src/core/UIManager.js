@@ -26,9 +26,6 @@ import {
 } from "../utils/constants.js";
 import { UI_STRINGS, formatScore } from "../utils/strings.js";
 
-/**
- * Renders UI dialogs on the canvas.
- */
 export class UIManager {
   /**
    * @param {object} [options]
@@ -40,11 +37,6 @@ export class UIManager {
     this.canvas = canvas || null;
   }
 
-  /**
-   * @param {string} state
-   * @param {object} [payload]
-   * @param {number} [payload.score]
-   */
   render(state, { score = 0 } = {}) {
     if (!this.ctx || !this.canvas) {
       return;
@@ -59,9 +51,6 @@ export class UIManager {
     }
   }
 
-  /**
-   * Renders the main menu dialog.
-   */
   renderMenu() {
     const message = UI_STRINGS.menuTitle;
     const options = [UI_STRINGS.menuYes, UI_STRINGS.menuNo];
@@ -74,9 +63,6 @@ export class UIManager {
     this.drawDialog({ x, y, width, height, message, options });
   }
 
-  /**
-   * @param {number} score
-   */
   renderGameOver(score) {
     const message = UI_STRINGS.gameOverTitle;
     const subtitle = formatScore(score);
@@ -90,16 +76,6 @@ export class UIManager {
     this.drawDialog({ x, y, width, height, message, options, subtitle });
   }
 
-  /**
-   * @param {object} options
-   * @param {number} options.x
-   * @param {number} options.y
-   * @param {number} options.width
-   * @param {number} options.height
-   * @param {string} options.message
-   * @param {string[]} [options.options]
-   * @param {string} [options.subtitle]
-   */
   drawDialog({ x, y, width, height, message, options = [], subtitle }) {
     this.ctx.save();
 
@@ -150,11 +126,6 @@ export class UIManager {
     this.ctx.restore();
   }
 
-  /**
-   * @param {number} centerX
-   * @param {number} centerY
-   * @param {string} label
-   */
   drawButton(centerX, centerY, label) {
     const metrics = this.ctx.measureText(label);
     const textWidth = metrics.width;
@@ -180,13 +151,6 @@ export class UIManager {
     this.ctx.restore();
   }
 
-  /**
-   * @param {number} x
-   * @param {number} y
-   * @param {number} width
-   * @param {number} height
-   * @param {number} radius
-   */
   drawRoundedRect(x, y, width, height, radius) {
     const r = Math.min(radius, width / 2, height / 2);
     this.ctx.beginPath();

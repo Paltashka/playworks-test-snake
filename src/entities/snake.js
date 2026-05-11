@@ -20,9 +20,6 @@ const OPPOSITE = new Map([
   [SNAKE_DIRECTIONS.RIGHT, SNAKE_DIRECTIONS.LEFT],
 ]);
 
-/**
- * Represents the snake entity on the grid.
- */
 export class Snake {
   /**
    * @param {object} options
@@ -41,9 +38,6 @@ export class Snake {
     this.reset();
   }
 
-  /**
-   * Resets the snake to its initial position and direction.
-   */
   reset() {
     const startX = Math.floor(this.cols / 2);
     const startY = Math.floor(this.rows / 2);
@@ -57,9 +51,6 @@ export class Snake {
     this.accumulator = 0;
   }
 
-  /**
-   * @param {{ x: number, y: number }} direction
-   */
   setDirection(direction) {
     if (!direction || direction === this.direction) {
       return;
@@ -70,12 +61,6 @@ export class Snake {
     this.nextDirection = direction;
   }
 
-  /**
-   * Updates the snake movement based on delta time.
-   * @param {number} deltaMs
-   * @param {import("./Food.js").Food} [food]
-   * @returns {{ moved: boolean, ate: boolean, hit: boolean }}
-   */
   update(deltaMs, food) {
     if (!this.alive) {
       return { moved: false, ate: false, hit: true };
@@ -123,10 +108,6 @@ export class Snake {
     return { moved, ate, hit: false };
   }
 
-  /**
-   * @param {{ x: number, y: number }} position
-   * @returns {boolean}
-   */
   isOutOfBounds(position) {
     return (
       position.x < 0 ||
@@ -136,11 +117,6 @@ export class Snake {
     );
   }
 
-  /**
-   * @param {{ x: number, y: number }} position
-   * @param {boolean} willEat
-   * @returns {boolean}
-   */
   isOnBody(position, willEat) {
     const limit = willEat ? this.body.length : this.body.length - 1;
     for (let i = 0; i < limit; i += 1) {
@@ -152,16 +128,10 @@ export class Snake {
     return false;
   }
 
-  /**
-   * @returns {Set<string>}
-   */
   getOccupiedSet() {
     return new Set(this.body.map((segment) => `${segment.x},${segment.y}`));
   }
 
-  /**
-   * @param {CanvasRenderingContext2D} ctx
-   */
   render(ctx) {
     if (!ctx) {
       return;

@@ -2,9 +2,6 @@ import { IMA_SDK_URL, IMA_TEST_AD_TAG } from "../utils/constants.js";
 import { defaultLogger } from "../utils/logger.js";
 import { UI_STRINGS } from "../utils/strings.js";
 
-/**
- * Handles Google IMA SDK initialization and ad playback.
- */
 export class AdsManager {
   /**
    * @param {object} [options]
@@ -47,10 +44,6 @@ export class AdsManager {
     this.lastRequestDims = null;
   }
 
-  /**
-   * Loads the IMA SDK script once.
-   * @returns {Promise<void>}
-   */
   static loadSdk() {
     if (AdsManager.sdkPromise) {
       return AdsManager.sdkPromise;
@@ -78,10 +71,6 @@ export class AdsManager {
     return AdsManager.sdkPromise;
   }
 
-  /**
-   * Initializes the ad display container inside a user gesture.
-   * @returns {Promise<boolean>}
-   */
   async prime() {
     if (this.initialized) {
       return true;
@@ -113,13 +102,6 @@ export class AdsManager {
     }
   }
 
-  /**
-   * Requests and plays a single ad.
-   * @param {object} [options]
-   * @param {number} [options.width]
-   * @param {number} [options.height]
-   * @returns {Promise<void>}
-   */
   async playAd({ width, height } = {}) {
     if (this.playing) {
       this.logger.warn("Ad already playing; ignoring request");
@@ -145,11 +127,6 @@ export class AdsManager {
     });
   }
 
-  /**
-   * @param {object} [options]
-   * @param {number} [options.width]
-   * @param {number} [options.height]
-   */
   requestAds({ width, height } = {}) {
     const dims = this.lastRequestDims || { width, height };
     const targetWidth = dims.width;
@@ -194,12 +171,6 @@ export class AdsManager {
     }
   }
 
-  /**
-   * @param {google.ima.AdsManagerLoadedEvent} event
-   * @param {() => void} resolve
-   * @param {number} [width]
-   * @param {number} [height]
-   */
   onAdsManagerLoaded(event, width, height) {
     try {
       this.adsManager = event.getAdsManager(this.video);
@@ -216,10 +187,6 @@ export class AdsManager {
     }
   }
 
-  /**
-   * @param {google.ima.AdErrorEvent} event
-   * @param {() => void} resolve
-   */
   onAdError(event) {
     if (event && event.getError) {
       this.logger.warn("Ad error:", event.getError().toString());
@@ -227,9 +194,6 @@ export class AdsManager {
     this.retryOrFail("ad_error");
   }
 
-  /**
-   * @param {() => void} resolve
-   */
   attachAdEvents() {
     if (!this.adsManager) {
       return;
@@ -255,14 +219,6 @@ export class AdsManager {
     );
   }
 
-  /**
-   * Cleans up ad playback and hides the overlay.
-   * @param {() => void} resolve
-   */
-  /**
-   * @param {object} [options]
-   * @param {boolean} [options.keepVisible]
-   */
   finish({ keepVisible = false } = {}) {
     if (this.adsManager) {
       try {
@@ -288,9 +244,6 @@ export class AdsManager {
     }
   }
 
-  /**
-   * @param {string} reason
-   */
   retryOrFail(reason) {
     if (this.retryCount < this.maxRetries) {
       this.retryCount += 1;
@@ -303,9 +256,6 @@ export class AdsManager {
     this.finishWithError(reason);
   }
 
-  /**
-   * @param {string} reason
-   */
   finishWithError(reason) {
     this.logger.warn("Ad failed", { reason });
     this.show();
@@ -321,18 +271,12 @@ export class AdsManager {
     }
   }
 
-  /**
-   * Shows the ad overlay container.
-   */
   show() {
     if (this.container) {
       this.container.style.display = "flex";
     }
   }
 
-  /**
-   * Hides the ad overlay container.
-   */
   hide() {
     if (this.container) {
       this.container.style.display = "none";
@@ -360,10 +304,6 @@ export class AdsManager {
     }
   }
 
-  /**
-   * @param {string} title
-   * @param {string} body
-   */
   showFallback(title, body) {
     this.ensureFallback();
     if (!this.fallbackEl || !this.fallbackTitleEl || !this.fallbackBodyEl) {

@@ -1,6 +1,3 @@
-/**
- * Manages the game canvas and its 2D rendering context.
- */
 export class CanvasManager {
   /**
    * @param {object} [options]
@@ -21,9 +18,6 @@ export class CanvasManager {
     }
   }
 
-  /**
-   * Clears the full canvas.
-   */
   clear() {
     if (!this.ctx || !this.canvas) {
       return;

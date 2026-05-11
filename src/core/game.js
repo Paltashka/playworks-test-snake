@@ -28,21 +28,7 @@ export const GAME_STATES = Object.freeze({
   GAMEOVER: "GAMEOVER",
 });
 
-/**
- * Orchestrates game state, entities, and rendering.
- */
 export class Game {
-  /**
-   * @param {object} [options]
-   * @param {CanvasManager} [options.canvasManager]
-   * @param {UIManager} [options.uiManager]
-   * @param {AdsManager} [options.adsManager]
-   * @param {HTMLCanvasElement} [options.canvas]
-   * @param {object} [options.logger]
-   * @param {(payload: { from: string, to: string }) => void} [options.onStateChange]
-   * @param {(payload: { type: string, data?: object }) => void} [options.onEvent]
-   * @param {(error: Error, context?: object) => void} [options.onError]
-   */
   constructor({
     canvasManager,
     uiManager,
@@ -98,13 +84,6 @@ export class Game {
     this.loop = this.loop.bind(this);
   }
 
-  /**
-   * @param {object} options
-   * @param {object} [options.logger]
-   * @param {(payload: { from: string, to: string }) => void} [options.onStateChange]
-   * @param {(payload: { type: string, data?: object }) => void} [options.onEvent]
-   * @param {(error: Error, context?: object) => void} [options.onError]
-   */
   configure({ logger, onStateChange, onEvent, onError } = {}) {
     if (logger) this.logger = logger;
     if (onStateChange) this.onStateChange = onStateChange;
@@ -112,9 +91,6 @@ export class Game {
     if (onError) this.onError = onError;
   }
 
-  /**
-   * Starts the requestAnimationFrame loop.
-   */
   start() {
     if (this.rafId !== null) {
       return;
@@ -122,9 +98,6 @@ export class Game {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
-  /**
-   * Stops the requestAnimationFrame loop.
-   */
   stop() {
     if (this.rafId === null) {
       return;
@@ -134,33 +107,20 @@ export class Game {
     this.prevTimestamp = 0;
   }
 
-  /**
-   * @param {object} [options]
-   * @param {boolean} [options.playAd]
-   */
   requestStart({ playAd = false } = {}) {
     this.pendingStart = true;
     this.pendingAd = playAd;
     this.adTargetState = GAME_STATES.GAME;
   }
 
-  /**
-   * Queues a game over transition.
-   */
   requestGameOver() {
     this.pendingGameOver = true;
   }
 
-  /**
-   * Queues a game restart.
-   */
   requestRestart() {
     this.pendingRestart = true;
   }
 
-  /**
-   * @param {string} nextState
-   */
   setState(nextState) {
     if (!Object.values(GAME_STATES).includes(nextState)) {
       this.logger.error("Unknown game state", nextState);
@@ -184,10 +144,6 @@ export class Game {
     }
   }
 
-  /**
-   * @param {string} action
-   * @param {string} phase
-   */
   handleInput(action, phase) {
     if (phase !== "down" || this.state !== GAME_STATES.GAME) {
       return;
@@ -206,9 +162,6 @@ export class Game {
     }
   }
 
-  /**
-   * Resets snake, food, and score.
-   */
   resetEntities() {
     if (this.snake) {
       this.snake.reset();
@@ -221,10 +174,6 @@ export class Game {
       : 0;
   }
 
-  /**
-   * Primes the ad container inside a user gesture.
-   * @returns {Promise<void>}
-   */
   async prepareAdPlayback() {
     if (!this.adsManager) {
       return;
@@ -238,9 +187,6 @@ export class Game {
     }
   }
 
-  /**
-   * @param {number} timestamp
-   */
   loop(timestamp) {
     if (!this.prevTimestamp) {
       this.prevTimestamp = timestamp;
@@ -260,9 +206,6 @@ export class Game {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
-  /**
-   * @param {number} deltaMs
-   */
   update(deltaMs) {
     switch (this.state) {
       case GAME_STATES.BOOT:
@@ -342,9 +285,6 @@ export class Game {
     }
   }
 
-  /**
-   * Draws the current frame.
-   */
   render() {
     if (!this.ctx || !this.canvas) {
       return;
@@ -398,29 +338,18 @@ export class Game {
     }
   }
 
-  /**
-   * @param {string} type
-   * @param {object} [data]
-   */
   emitEvent(type, data) {
     if (FEATURE_FLAGS.enableTelemetry && this.onEvent) {
       this.onEvent({ type, data });
     }
   }
 
-  /**
-   * @param {Error} error
-   * @param {object} [context]
-   */
   emitError(error, context) {
     if (FEATURE_FLAGS.enableTelemetry && this.onError) {
       this.onError(error, context);
     }
   }
 
-  /**
-   * Draws the background grid.
-   */
   renderGrid() {
     const { ctx, canvas, cellSize } = this;
     if (!ctx || !canvas) {
@@ -450,11 +379,6 @@ export class Game {
   }
 }
 
-/**
- * Creates and starts a new game instance.
- * @param {object} [options]
- * @returns {Game}
- */
 export function initGame(options = {}) {
   const game = new Game(options);
   game.start();
