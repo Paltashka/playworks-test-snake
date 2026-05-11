@@ -9,6 +9,7 @@ export const UI_STRINGS = Object.freeze({
   adLoadingTitle: "Loading ad...",
   adWarningTitle: "Ad is about to start",
   adWarningBody: "Continuing in",
+  adWarningSkip: "Skip wait (Backspace)",
 });
 
 export function formatScore(score) {

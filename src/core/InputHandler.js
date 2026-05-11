@@ -114,6 +114,11 @@ export class InputHandler {
       return;
     }
 
+    if (state === GAME_STATES.GAME && action === "CANCEL") {
+      this.game.setState(GAME_STATES.MENU);
+      return;
+    }
+
     if (state === GAME_STATES.GAMEOVER && action === "OK") {
       this.game.requestRestart();
     }

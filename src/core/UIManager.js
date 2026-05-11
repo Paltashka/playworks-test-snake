@@ -64,13 +64,14 @@ export class UIManager {
     const countdown = Math.max(1, secondsLeft);
     const message = UI_STRINGS.adWarningTitle;
     const subtitle = `${UI_STRINGS.adWarningBody} ${countdown}...`;
+    const options = [UI_STRINGS.adWarningSkip];
 
     const width = Math.min(UI_DIALOG_WIDTH, this.canvas.width * 0.8);
     const height = UI_AD_WARNING_HEIGHT;
     const x = (this.canvas.width - width) / 2;
     const y = (this.canvas.height - height) / 2;
 
-    this.drawDialog({ x, y, width, height, message, subtitle, options: [] });
+    this.drawDialog({ x, y, width, height, message, subtitle, options });
   }
 
   renderMenu() {

@@ -44,7 +44,7 @@ export const SNAKE_INITIAL_LENGTH = 3;
 
 export const FOOD_COLOR = "#f97316";
 
-export const AD_WARNING_DURATION_MS = 3000;
+export const AD_WARNING_DURATION_MS = 5000;
 
 export const UI_AD_WARNING_HEIGHT = 200;
 

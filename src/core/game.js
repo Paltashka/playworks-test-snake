@@ -222,7 +222,11 @@ export class Game {
           this.pendingStart = false;
           if (this.pendingAd) {
             this.pendingAd = false;
-            this.setState(GAME_STATES.AD_PLAYING);
+            if (this.adsManager) {
+              this.setState(GAME_STATES.AD_WARNING);
+            } else {
+              this.setState(GAME_STATES.GAME);
+            }
           } else {
             this.setState(GAME_STATES.GAME);
           }
