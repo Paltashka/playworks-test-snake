@@ -12,9 +12,9 @@ import {
   GAME_GRID_ALPHA,
   HUD_TEXT_COLOR,
   HUD_FONT,
-  HUD_TITLE_FONT,
   HUD_PADDING,
   SNAKE_INITIAL_LENGTH,
+  AD_WARNING_DURATION_MS,
 } from "../utils/constants.js";
 import { FEATURE_FLAGS } from "../utils/config.js";
 import { defaultLogger } from "../utils/logger.js";
@@ -23,6 +23,7 @@ import { formatScore } from "../utils/strings.js";
 export const GAME_STATES = Object.freeze({
   BOOT: "BOOT",
   MENU: "MENU",
+  AD_WARNING: "AD_WARNING",
   AD_PLAYING: "AD_PLAYING",
   GAME: "GAME",
   GAMEOVER: "GAMEOVER",
@@ -60,6 +61,7 @@ export class Game {
     this.pendingAd = false;
     this.pendingGameOver = false;
     this.pendingRestart = false;
+    this.pendingSkipWarning = false;
 
     this.cellSize = GRID_CELL_SIZE;
     this.cols = GRID_COLS;
@@ -174,6 +176,10 @@ export class Game {
       : 0;
   }
 
+  skipAdWarning() {
+    this.pendingSkipWarning = true;
+  }
+
   async prepareAdPlayback() {
     if (!this.adsManager) {
       return;
@@ -266,10 +272,19 @@ export class Game {
           this.pendingGameOver = false;
           if (this.adsManager) {
             this.adTargetState = GAME_STATES.GAMEOVER;
-            this.setState(GAME_STATES.AD_PLAYING);
+            this.setState(GAME_STATES.AD_WARNING);
           } else {
             this.setState(GAME_STATES.GAMEOVER);
           }
+        }
+        break;
+      case GAME_STATES.AD_WARNING:
+        if (
+          this.pendingSkipWarning ||
+          this.timeInStateMs >= AD_WARNING_DURATION_MS
+        ) {
+          this.pendingSkipWarning = false;
+          this.setState(GAME_STATES.AD_PLAYING);
         }
         break;
       case GAME_STATES.GAMEOVER:
@@ -296,17 +311,17 @@ export class Game {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+    this.ctx.save();
+    this.applyCanvasClip();
+
     this.ctx.fillStyle = GAME_BG_COLOR;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.renderGrid();
 
-    if (this.uiManager) {
-      this.uiManager.render(this.state, { score: this.score });
-    }
-
     if (
       this.state === GAME_STATES.GAME ||
-      this.state === GAME_STATES.GAMEOVER
+      this.state === GAME_STATES.GAMEOVER ||
+      this.state === GAME_STATES.AD_WARNING
     ) {
       if (this.food) {
         this.food.render(this.ctx);
@@ -322,20 +337,32 @@ export class Game {
       this.ctx.fillText(formatScore(this.score), HUD_PADDING, HUD_PADDING);
     }
 
-    if (
-      this.state !== GAME_STATES.MENU &&
-      this.state !== GAME_STATES.GAMEOVER
-    ) {
-      this.ctx.fillStyle = HUD_TEXT_COLOR;
-      this.ctx.font = HUD_TITLE_FONT;
-      this.ctx.textAlign = "center";
-      this.ctx.textBaseline = "middle";
-      this.ctx.fillText(
-        this.state,
-        this.canvas.width / 2,
-        this.canvas.height / 2,
-      );
+    if (this.uiManager) {
+      this.uiManager.render(this.state, {
+        score: this.score,
+        timeInStateMs: this.timeInStateMs,
+      });
     }
+
+    this.ctx.restore();
+  }
+
+  applyCanvasClip() {
+    const r = 16;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    this.ctx.beginPath();
+    this.ctx.moveTo(r, 0);
+    this.ctx.lineTo(w - r, 0);
+    this.ctx.quadraticCurveTo(w, 0, w, r);
+    this.ctx.lineTo(w, h - r);
+    this.ctx.quadraticCurveTo(w, h, w - r, h);
+    this.ctx.lineTo(r, h);
+    this.ctx.quadraticCurveTo(0, h, 0, h - r);
+    this.ctx.lineTo(0, r);
+    this.ctx.quadraticCurveTo(0, 0, r, 0);
+    this.ctx.closePath();
+    this.ctx.clip();
   }
 
   emitEvent(type, data) {

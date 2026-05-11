@@ -10,6 +10,7 @@ import {
   UI_DIALOG_WIDTH,
   UI_MENU_HEIGHT,
   UI_GAMEOVER_HEIGHT,
+  UI_AD_WARNING_HEIGHT,
   UI_OPTION_GAP,
   UI_TITLE_Y_RATIO,
   UI_SUBTITLE_Y_RATIO,
@@ -23,6 +24,7 @@ import {
   UI_BUTTON_PADDING_X,
   UI_BUTTON_PADDING_Y,
   UI_BUTTON_RADIUS,
+  AD_WARNING_DURATION_MS,
 } from "../utils/constants.js";
 import { UI_STRINGS, formatScore } from "../utils/strings.js";
 
@@ -37,7 +39,7 @@ export class UIManager {
     this.canvas = canvas || null;
   }
 
-  render(state, { score = 0 } = {}) {
+  render(state, { score = 0, timeInStateMs = 0 } = {}) {
     if (!this.ctx || !this.canvas) {
       return;
     }
@@ -46,9 +48,29 @@ export class UIManager {
       this.renderMenu();
     }
 
+    if (state === GAME_STATES.AD_WARNING) {
+      this.renderAdWarning(timeInStateMs);
+    }
+
     if (state === GAME_STATES.GAMEOVER) {
       this.renderGameOver(score);
     }
+  }
+
+  renderAdWarning(timeInStateMs) {
+    const secondsLeft = Math.ceil(
+      (AD_WARNING_DURATION_MS - timeInStateMs) / 1000,
+    );
+    const countdown = Math.max(1, secondsLeft);
+    const message = UI_STRINGS.adWarningTitle;
+    const subtitle = `${UI_STRINGS.adWarningBody} ${countdown}...`;
+
+    const width = Math.min(UI_DIALOG_WIDTH, this.canvas.width * 0.8);
+    const height = UI_AD_WARNING_HEIGHT;
+    const x = (this.canvas.width - width) / 2;
+    const y = (this.canvas.height - height) / 2;
+
+    this.drawDialog({ x, y, width, height, message, subtitle, options: [] });
   }
 
   renderMenu() {

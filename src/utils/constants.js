@@ -44,6 +44,10 @@ export const SNAKE_INITIAL_LENGTH = 3;
 
 export const FOOD_COLOR = "#f97316";
 
+export const AD_WARNING_DURATION_MS = 3000;
+
+export const UI_AD_WARNING_HEIGHT = 200;
+
 export const IMA_SDK_URL = "https://imasdk.googleapis.com/js/sdkloader/ima3.js";
 export const IMA_TEST_AD_TAG =
   "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator=";

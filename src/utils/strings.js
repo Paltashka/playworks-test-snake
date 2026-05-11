@@ -7,6 +7,8 @@ export const UI_STRINGS = Object.freeze({
   adFallbackTitle: "Ad unavailable",
   adFallbackBody: "Continuing the game...",
   adLoadingTitle: "Loading ad...",
+  adWarningTitle: "Ad is about to start",
+  adWarningBody: "Continuing in",
 });
 
 export function formatScore(score) {

@@ -12,6 +12,7 @@ const KEY_ACTIONS = Object.freeze({
 const DEFAULT_BINDINGS = Object.freeze({
   [GAME_STATES.BOOT]: new Set(),
   [GAME_STATES.MENU]: new Set(["OK", "CANCEL"]),
+  [GAME_STATES.AD_WARNING]: new Set(["CANCEL"]),
   [GAME_STATES.AD_PLAYING]: new Set(["CANCEL"]),
   [GAME_STATES.GAME]: new Set(["UP", "DOWN", "LEFT", "RIGHT", "CANCEL"]),
   [GAME_STATES.GAMEOVER]: new Set(["OK", "CANCEL"]),
@@ -119,6 +120,14 @@ export class InputHandler {
 
     if (state === GAME_STATES.MENU && action === "CANCEL") {
       window.location.href = "https://google.com";
+    }
+
+    if (state === GAME_STATES.GAMEOVER && action === "CANCEL") {
+      window.location.href = "https://google.com";
+    }
+
+    if (state === GAME_STATES.AD_WARNING && action === "CANCEL") {
+      this.game.skipAdWarning();
     }
   }
 }
